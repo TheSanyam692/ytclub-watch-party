@@ -27,7 +27,7 @@ function findUserRoom(socketId) {
   return null;
 }
 
-// Helper: check if socket is room host
+// Helper: check if socket is room host (keeping for role-specific UI, but disabling for control checks)
 function isHost(socketId, roomId) {
   if (!rooms[roomId]) return false;
   const user = rooms[roomId].users.find((u) => u.id === socketId);
@@ -51,14 +51,24 @@ io.on("connection", (socket) => {
       };
     }
 
-    const user = {
-      id: socket.id,
-      username,
-      role: rooms[roomId].users.length === 0 ? "Host" : "Viewer",
-      isMuted: false,
-    };
+    const existingUserIndex = rooms[roomId].users.findIndex((u) => u.id === socket.id);
+    
+    if (existingUserIndex !== -1) {
+      // Already in room — just update username
+      rooms[roomId].users[existingUserIndex].username = username;
+    } else {
+      // New user — add to room
+      const newUser = {
+        id: socket.id,
+        username,
+        role: rooms[roomId].users.length === 0 ? "Host" : "Viewer",
+        isMuted: false,
+      };
+      rooms[roomId].users.push(newUser);
+    }
 
-    rooms[roomId].users.push(user);
+    // Get the user object (works for both new and existing)
+    const user = rooms[roomId].users.find((u) => u.id === socket.id);
 
     // Calculate estimated current time if video is playing
     let estimatedTime = rooms[roomId].currentTime;
@@ -89,7 +99,7 @@ io.on("connection", (socket) => {
 
   // ─── LOAD VIDEO ───
   socket.on("load_video", ({ roomId, videoUrl }) => {
-    if (!rooms[roomId] || !isHost(socket.id, roomId)) return;
+    if (!rooms[roomId]) return;
 
     rooms[roomId].videoUrl = videoUrl;
     rooms[roomId].isPlaying = true;
@@ -107,34 +117,34 @@ io.on("connection", (socket) => {
 
   // ─── PLAY VIDEO ───
   socket.on("play_video", ({ roomId, currentTime }) => {
-    if (!rooms[roomId] || !isHost(socket.id, roomId)) return;
+    if (!rooms[roomId]) return;
 
     rooms[roomId].isPlaying = true;
     rooms[roomId].currentTime = currentTime;
     rooms[roomId].lastUpdateTime = Date.now();
 
-    socket.to(roomId).emit("video_played", { currentTime });
+    socket.to(roomId).emit("video_played", { currentTime, username: rooms[roomId].users.find(u => u.id === socket.id)?.username });
   });
 
   // ─── PAUSE VIDEO ───
   socket.on("pause_video", ({ roomId, currentTime }) => {
-    if (!rooms[roomId] || !isHost(socket.id, roomId)) return;
+    if (!rooms[roomId]) return;
 
     rooms[roomId].isPlaying = false;
     rooms[roomId].currentTime = currentTime;
     rooms[roomId].lastUpdateTime = Date.now();
 
-    socket.to(roomId).emit("video_paused", { currentTime });
+    socket.to(roomId).emit("video_paused", { currentTime, username: rooms[roomId].users.find(u => u.id === socket.id)?.username });
   });
 
   // ─── SEEK VIDEO ───
   socket.on("seek_video", ({ roomId, currentTime }) => {
-    if (!rooms[roomId] || !isHost(socket.id, roomId)) return;
+    if (!rooms[roomId]) return;
 
     rooms[roomId].currentTime = currentTime;
     rooms[roomId].lastUpdateTime = Date.now();
 
-    socket.to(roomId).emit("video_seeked", { currentTime });
+    socket.to(roomId).emit("video_seeked", { currentTime, username: rooms[roomId].users.find(u => u.id === socket.id)?.username });
   });
 
   // ─── MUTE USER ───
@@ -196,6 +206,30 @@ io.on("connection", (socket) => {
         message: `${newHost.username} is now the host`,
         type: "info",
       });
+    }
+  });
+
+  // ─── CHAT MESSAGES ───
+  socket.on("send_message", ({ roomId, message }) => {
+    if (!rooms[roomId]) return;
+    const user = rooms[roomId].users.find((u) => u.id === socket.id);
+    if (!user) return;
+
+    const chatMsg = {
+      username: user.username,
+      text: message,
+      timestamp: Date.now(),
+    };
+
+    io.to(roomId).emit("chat_message", chatMsg);
+  });
+
+  // ─── WEBRTC SIGNALING ───
+  socket.on("webrtc_signal", ({ to, from, signal }) => {
+    // If 'to' is specified, send to that user, otherwise broadcast? 
+    // Usually signaling is 1-to-1.
+    if (to) {
+      io.to(to).emit("webrtc_signal", { from: from || socket.id, signal });
     }
   });
 
