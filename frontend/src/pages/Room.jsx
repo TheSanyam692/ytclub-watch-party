@@ -4,7 +4,9 @@ import { socket } from "../socket";
 import YouTube from "react-youtube";
 import { motion, AnimatePresence } from "framer-motion";
 import Peer from "simple-peer";
+import { Mic, MicOff, LogOut, Copy, Play, Pause, FastForward, Rewind, Check, Send, Crown, User, VolumeX } from "lucide-react";
 import "../App.css";
+
 
 function Room() {
   const { roomId } = useParams();
@@ -381,23 +383,28 @@ function Room() {
         </AnimatePresence>
       </div>
 
-      {/* LEFT SIDEBAR */}
+      {/* LEFT SIDEBAR (Top Nav on Mobile) */}
       <aside className="sidebar-left p-4 z-10 shrink-0">
         <div className="flex items-center gap-3 mb-4 lg:mb-8 px-2">
-          <span className="text-2xl">🎬</span>
-          <span className="text-xl font-bold gradient-text">YTClub</span>
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center shadow-[0_0_20px_rgba(139,92,246,0.3)]">
+            <Play className="w-5 h-5 text-white ml-1" fill="currentColor" />
+          </div>
+          <span className="text-xl font-bold text-white tracking-wide">YTClub</span>
         </div>
         
-        <nav className="flex-1 flex lg:flex-col gap-2 overflow-x-auto custom-scrollbar pb-2 lg:pb-0">
-          <button className="nav-item active">
-            <span className="text-lg">🏠</span> Room
+        <nav className="flex-1 flex lg:flex-col gap-3 overflow-x-auto custom-scrollbar pb-2 lg:pb-0">
+          <button className="nav-item active flex items-center gap-3">
+            <span className="text-purple-400"><Play className="w-5 h-5" /></span> 
+            <span className="hidden lg:inline font-semibold">Room</span>
           </button>
-          <div className="lg:mt-auto flex lg:flex-col gap-2 ml-auto lg:ml-0 shrink-0">
-            <button onClick={toggleMic} className={`nav-item ${isMicOn ? "text-red-400 bg-red-500/10 border-red-500/20" : ""}`}>
-              <span className="text-lg">{isMicOn ? "🎙️" : "🔇"}</span> <span className="hidden lg:inline">{isMicOn ? "Mic On" : "Mic Off"}</span>
+          <div className="lg:mt-auto flex lg:flex-col gap-3 ml-auto lg:ml-0 shrink-0">
+            <button onClick={toggleMic} className={`nav-item flex items-center gap-3 ${isMicOn ? "bg-white/5 text-gray-300 hover:bg-white/10" : "bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)]"}`}>
+              {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />} 
+              <span className="hidden lg:inline font-medium">{isMicOn ? "Mic On" : "Muted"}</span>
             </button>
-            <button onClick={() => navigate("/")} className="nav-item text-red-400 hover:bg-red-500/10 hover:text-red-400">
-              <span className="text-lg">🚪</span> <span className="hidden lg:inline">Leave Room</span>
+            <button onClick={() => navigate("/")} className="nav-item flex items-center gap-3 text-red-400 hover:bg-red-500/10 hover:text-red-400 transition-all group">
+              <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" /> 
+              <span className="hidden lg:inline font-medium">Leave Room</span>
             </button>
           </div>
         </nav>
@@ -406,24 +413,33 @@ function Room() {
       {/* CENTER CONTENT */}
       <main className="flex-1 flex flex-col min-w-0 relative z-10" onClick={() => setContextMenu(null)}>
         {/* HEADER / URL BAR */}
-        <header className="h-auto lg:h-16 border-b border-white/[0.05] flex flex-col lg:flex-row items-center px-4 lg:px-6 py-3 lg:py-0 shrink-0 backdrop-blur-xl bg-black/20 gap-3 lg:gap-0 lg:justify-between w-full">
-          <div className="flex-1 w-full lg:max-w-2xl url-bar">
+        <header className="h-auto lg:h-20 border-b border-white/[0.05] flex flex-col lg:flex-row items-center px-4 lg:px-8 py-4 lg:py-0 shrink-0 backdrop-blur-xl bg-black/40 gap-4 lg:gap-0 lg:justify-between w-full z-20">
+          <div className="flex-1 w-full lg:max-w-2xl url-bar shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+            <div className="pl-4 text-gray-500"><Play className="w-4 h-4" /></div>
             <input 
               type="text" 
-              placeholder="Paste YouTube URL here..." 
+              placeholder="Paste YouTube URL here to sync..." 
               value={urlInput} 
               onChange={(e) => setUrlInput(e.target.value)} 
               onKeyDown={(e) => e.key === "Enter" && handleLoadVideo()} 
-              className="w-full"
+              className="w-full text-sm font-medium tracking-wide placeholder:text-gray-600"
             />
-            <button onClick={() => handleLoadVideo()}>LOAD</button>
+            <button onClick={() => handleLoadVideo()} className="font-bold tracking-widest text-[11px] uppercase px-6">Load</button>
           </div>
-          <div className="w-full lg:w-auto flex items-center justify-between lg:justify-end ml-0 lg:ml-4">
-             <span className="text-xs text-gray-500 font-bold lg:hidden">ROOM CODE:</span>
-             <div className="room-code-chip" onClick={() => { navigator.clipboard.writeText(roomId); setCopied(true); setTimeout(()=>setCopied(false), 2000); addToast("Code copied!"); }}>
-               <span className="font-mono text-xs text-gray-400 hidden lg:inline">ID:</span>
-               <span className="font-bold text-purple-400 tracking-widest">{roomId}</span>
-               <span className="text-xs ml-1">{copied ? "✓" : "📋"}</span>
+          
+          <div className="w-full lg:w-auto flex items-center justify-between lg:justify-end ml-0 lg:ml-6 gap-4">
+             {/* Live Status Badge */}
+             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+               <span className="text-[10px] font-bold text-emerald-400 tracking-widest uppercase">Live Synced</span>
+             </div>
+
+             <div className="room-code-chip group cursor-pointer" onClick={() => { navigator.clipboard.writeText(roomId); setCopied(true); setTimeout(()=>setCopied(false), 2000); addToast("Code copied!"); }}>
+               <span className="text-xs text-gray-500 font-medium group-hover:text-gray-400 transition-colors hidden lg:inline">Room:</span>
+               <span className="font-bold text-purple-300 tracking-widest group-hover:text-purple-200 transition-colors">{roomId}</span>
+               <div className="ml-1 w-6 h-6 rounded-md bg-white/5 flex items-center justify-center group-hover:bg-purple-500/20 transition-all">
+                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-purple-400" />}
+               </div>
              </div>
           </div>
         </header>
@@ -452,10 +468,18 @@ function Room() {
 
           {/* CONTROLS */}
           {currentVideoId && (
-            <div className="mt-4 p-3 lg:p-4 glass-card flex items-center justify-center gap-4 lg:gap-6 w-full overflow-x-auto shrink-0">
-              <button onClick={() => { const t = playerRef.current?.getCurrentTime() || 0; playerRef.current?.seekTo(t - 10, true); socket.emit("seek_video", { roomId, currentTime: t - 10 }); }} className="control-btn w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-lg lg:text-xl shrink-0">⏪</button>
-              <button onClick={() => { const s = playerRef.current?.getPlayerState(); if(s === 1) playerRef.current?.pauseVideo(); else playerRef.current?.playVideo(); }} className="control-btn w-14 h-14 lg:w-16 lg:h-16 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-xl lg:text-2xl text-purple-400 shadow-[0_0_20px_rgba(139,92,246,0.2)] shrink-0">⏯</button>
-              <button onClick={() => { const t = playerRef.current?.getCurrentTime() || 0; playerRef.current?.seekTo(t + 10, true); socket.emit("seek_video", { roomId, currentTime: t + 10 }); }} className="control-btn w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-lg lg:text-xl shrink-0">⏩</button>
+            <div className="mt-6 p-4 glass-card flex items-center justify-center gap-6 lg:gap-8 w-full shrink-0 shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
+              <button onClick={() => { const t = playerRef.current?.getCurrentTime() || 0; playerRef.current?.seekTo(t - 10, true); socket.emit("seek_video", { roomId, currentTime: t - 10 }); }} className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:bg-white/10 hover:text-white transition-all hover:-translate-y-0.5 active:scale-95 shrink-0">
+                <Rewind className="w-5 h-5" fill="currentColor" />
+              </button>
+              
+              <button onClick={() => { const s = playerRef.current?.getPlayerState(); if(s === 1) playerRef.current?.pauseVideo(); else playerRef.current?.playVideo(); }} className="w-16 h-16 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 border border-purple-400/30 flex items-center justify-center text-white shadow-[0_0_30px_rgba(139,92,246,0.3)] hover:shadow-[0_0_40px_rgba(139,92,246,0.5)] transition-all hover:scale-105 active:scale-95 shrink-0">
+                {playerRef.current?.getPlayerState() === 1 ? <Pause className="w-6 h-6" fill="currentColor" /> : <Play className="w-6 h-6 ml-1" fill="currentColor" />}
+              </button>
+              
+              <button onClick={() => { const t = playerRef.current?.getCurrentTime() || 0; playerRef.current?.seekTo(t + 10, true); socket.emit("seek_video", { roomId, currentTime: t + 10 }); }} className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:bg-white/10 hover:text-white transition-all hover:-translate-y-0.5 active:scale-95 shrink-0">
+                <FastForward className="w-5 h-5" fill="currentColor" />
+              </button>
             </div>
           )}
         </div>
@@ -483,11 +507,11 @@ function Room() {
                   ))}
                   <div ref={chatEndRef} />
                 </div>
-                <form onSubmit={handleSendMessage} className="p-4 border-t border-white/10 bg-black/40 shrink-0">
-                  <div className="flex gap-3">
-                    <input type="text" placeholder="Say something..." value={chatInput} onChange={(e) => setChatInput(e.target.value)} className="chat-input shadow-[0_0_15px_rgba(0,0,0,0.5)]" />
-                    <button type="submit" className="w-[50px] h-[50px] shrink-0 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center border border-purple-500/30 hover:bg-purple-500/40 hover:text-white transition-all shadow-[0_0_15px_rgba(139,92,246,0.1)] hover:shadow-[0_0_20px_rgba(139,92,246,0.3)]">
-                      <span className="text-xl">➔</span>
+                <form onSubmit={handleSendMessage} className="p-5 border-t border-white/[0.05] bg-black/40 shrink-0 backdrop-blur-md">
+                  <div className="flex gap-3 relative">
+                    <input type="text" placeholder="Message the room..." value={chatInput} onChange={(e) => setChatInput(e.target.value)} className="chat-input shadow-inner pr-14" />
+                    <button type="submit" className="absolute right-1.5 top-1.5 bottom-1.5 w-[38px] rounded-xl bg-purple-500 text-white flex items-center justify-center hover:bg-purple-400 transition-colors shadow-[0_0_15px_rgba(139,92,246,0.3)]">
+                      <Send className="w-4 h-4 ml-0.5" />
                     </button>
                   </div>
                 </form>
@@ -495,25 +519,34 @@ function Room() {
             ) : (
               <motion.div key="users" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="absolute inset-0 overflow-y-auto p-4 space-y-2 custom-scrollbar">
                 {users.map((u) => (
-                  <div key={u.id} className="participant-card">
-                    <div className={`avatar ${u.role === "Host" ? "avatar-host" : "avatar-viewer"}`}>
-                      {u.username.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold text-gray-200 flex items-center gap-2 truncate">
-                        {u.username}
-                        {u.id === socket.id && <span className="text-[9px] bg-white/10 px-1.5 py-0.5 rounded text-gray-400 uppercase tracking-wider">You</span>}
+                  <motion.div layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} key={u.id} className="participant-card relative group cursor-default">
+                    <div className="relative">
+                      <div className={`avatar ${u.role === "Host" ? "bg-gradient-to-tr from-purple-600 to-indigo-500 shadow-[0_0_15px_rgba(139,92,246,0.3)]" : "bg-white/10 border border-white/10"}`}>
+                        {u.username.charAt(0).toUpperCase()}
                       </div>
-                      <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mt-0.5">{u.role}</div>
+                      {/* Online Indicator Ring */}
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-[#111114] rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                     </div>
-                    {u.isMuted && <span className="text-xs shrink-0">🔇</span>}
-                  </div>
+                    
+                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                      <div className="text-[14px] font-bold text-gray-200 flex items-center gap-2 truncate">
+                        {u.username}
+                        {u.id === socket.id && <span className="text-[9px] bg-white/10 px-1.5 py-0.5 rounded text-gray-400 uppercase tracking-wider font-semibold">You</span>}
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        {u.role === "Host" ? <Crown className="w-3 h-3 text-purple-400" /> : <User className="w-3 h-3 text-gray-500" />}
+                        <span className={`text-[10px] uppercase tracking-wider font-bold ${u.role === "Host" ? "text-purple-400" : "text-gray-500"}`}>{u.role}</span>
+                      </div>
+                    </div>
+                    {u.isMuted && <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center shrink-0"><VolumeX className="w-4 h-4 text-red-400" /></div>}
+                  </motion.div>
                 ))}
                 
-                <div className="mt-6 p-5 rounded-2xl bg-purple-500/5 border border-purple-500/10 text-center">
-                  <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest mb-3">Invite Friends</p>
-                  <button onClick={() => { navigator.clipboard.writeText(roomId); setCopied(true); setTimeout(()=>setCopied(false), 2000); addToast("Code copied!"); }} className="btn-invite w-full flex items-center justify-center gap-2">
-                    <span>{copied ? "✓ Copied!" : "📋 Copy Room Link"}</span>
+                <div className="mt-8 p-6 rounded-2xl bg-gradient-to-b from-purple-500/10 to-transparent border border-purple-500/20 text-center relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-purple-500/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                  <p className="text-[11px] text-purple-300/70 font-bold uppercase tracking-widest mb-4 relative z-10">Invite Friends</p>
+                  <button onClick={() => { navigator.clipboard.writeText(roomId); setCopied(true); setTimeout(()=>setCopied(false), 2000); addToast("Code copied!"); }} className="btn-primary w-full py-3.5 rounded-xl text-[13px] font-bold text-white flex items-center justify-center gap-2 relative z-10 shadow-[0_4px_20px_rgba(139,92,246,0.3)]">
+                    {copied ? <><Check className="w-4 h-4" /> Copied!</> : <><Copy className="w-4 h-4" /> Copy Room Link</>}
                   </button>
                 </div>
               </motion.div>
