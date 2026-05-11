@@ -461,9 +461,9 @@ function Room() {
 
       {/* RIGHT SIDEBAR */}
       <aside className="sidebar-right z-10 shrink-0">
-        <div className="flex border-b border-white/5 shrink-0">
-          <button onClick={() => setActiveTab("chat")} className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${activeTab === "chat" ? "text-purple-400 border-b-2 border-purple-400 bg-purple-500/5" : "text-gray-500 hover:text-gray-300"}`}>Chat</button>
-          <button onClick={() => setActiveTab("users")} className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${activeTab === "users" ? "text-purple-400 border-b-2 border-purple-400 bg-purple-500/5" : "text-gray-500 hover:text-gray-300"}`}>People ({users.length})</button>
+        <div className="flex border-b border-white/10 shrink-0 bg-white/5">
+          <button onClick={() => setActiveTab("chat")} className={`flex-1 py-5 text-sm font-black uppercase tracking-widest transition-all ${activeTab === "chat" ? "text-purple-400 border-b-2 border-purple-400 bg-purple-500/10 shadow-[inset_0_-2px_10px_rgba(139,92,246,0.1)]" : "text-gray-400 hover:text-gray-200 hover:bg-white/5"}`}>Chat</button>
+          <button onClick={() => setActiveTab("users")} className={`flex-1 py-5 text-sm font-black uppercase tracking-widest transition-all ${activeTab === "users" ? "text-purple-400 border-b-2 border-purple-400 bg-purple-500/10 shadow-[inset_0_-2px_10px_rgba(139,92,246,0.1)]" : "text-gray-400 hover:text-gray-200 hover:bg-white/5"}`}>People ({users.length})</button>
         </div>
 
         <div className="flex-1 overflow-hidden relative">
@@ -481,10 +481,12 @@ function Room() {
                   ))}
                   <div ref={chatEndRef} />
                 </div>
-                <form onSubmit={handleSendMessage} className="p-4 border-t border-white/5 bg-black/20 shrink-0">
-                  <div className="flex gap-2">
-                    <input type="text" placeholder="Say something..." value={chatInput} onChange={(e) => setChatInput(e.target.value)} className="chat-input" />
-                    <button type="submit" className="w-[42px] h-[42px] shrink-0 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center border border-purple-500/30 hover:bg-purple-500/30 transition-all">➔</button>
+                <form onSubmit={handleSendMessage} className="p-4 border-t border-white/10 bg-black/40 shrink-0">
+                  <div className="flex gap-3">
+                    <input type="text" placeholder="Say something..." value={chatInput} onChange={(e) => setChatInput(e.target.value)} className="chat-input shadow-[0_0_15px_rgba(0,0,0,0.5)]" />
+                    <button type="submit" className="w-[50px] h-[50px] shrink-0 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center border border-purple-500/30 hover:bg-purple-500/40 hover:text-white transition-all shadow-[0_0_15px_rgba(139,92,246,0.1)] hover:shadow-[0_0_20px_rgba(139,92,246,0.3)]">
+                      <span className="text-xl">➔</span>
+                    </button>
                   </div>
                 </form>
               </motion.div>

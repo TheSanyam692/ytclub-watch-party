@@ -165,23 +165,25 @@
 }
 
 .chat-input {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  color: #e5e7eb;
-  font-size: 13px;
-  transition: all 0.2s ease;
-  border-radius: 10px;
-  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f3f4f6;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  padding: 14px 18px;
   width: 100%;
   outline: none;
   resize: none;
 }
 .chat-input:focus {
-  border-color: rgba(139, 92, 246, 0.4);
-  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(139, 92, 246, 0.6);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
 }
 .chat-input::placeholder {
-  color: rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.3);
 }
 
 /* ─── PLAYER ─── */
@@ -202,27 +204,29 @@
 
 /* ─── CHAT MESSAGES ─── */
 .chat-bubble-self {
-  background: rgba(109, 40, 217, 0.2);
-  border: 1px solid rgba(139, 92, 246, 0.2);
-  border-radius: 14px 14px 4px 14px;
+  background: linear-gradient(135deg, rgba(109, 40, 217, 0.3), rgba(139, 92, 246, 0.2));
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 16px 16px 4px 16px;
   color: #ddd6fe;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
 }
 .chat-bubble-other {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 14px 14px 14px 4px;
-  color: #e5e7eb;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px 16px 16px 4px;
+  color: #f3f4f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* ─── AVATAR ─── */
 .avatar {
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -263,15 +267,18 @@
 .participant-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.04);
-  transition: background 0.2s ease;
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.3s ease;
 }
 .participant-card:hover {
-  background: rgba(255,255,255,0.04);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 /* ─── QUEUE CARD ─── */
