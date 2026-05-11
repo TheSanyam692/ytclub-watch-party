@@ -4,7 +4,7 @@ import { socket } from "../socket";
 import YouTube from "react-youtube";
 import { motion, AnimatePresence } from "framer-motion";
 import Peer from "simple-peer";
-import { Mic, MicOff, LogOut, Copy, Play, Pause, FastForward, Rewind, Check, Send, Crown, User, VolumeX } from "lucide-react";
+import { LogOut, Copy, Play, Pause, FastForward, Rewind, Check, Send, Crown, User } from "lucide-react";
 import "../App.css";
 
 
@@ -29,26 +29,13 @@ function Room() {
   const [chatInput, setChatInput] = useState("");
   const [activeTab, setActiveTab] = useState("chat"); // 'chat' or 'users'
 
-  // Mic/WebRTC State
-  const [isMicOn, setIsMicOn] = useState(false);
-  const [stream, setStream] = useState(null);
-  const [peers, setPeers] = useState({}); // { socketId: Peer }
-
   // Player Sync State
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const playerRef = useRef(null);
   const suppressEventsUntil = useRef(0);
   const toastId = useRef(0);
   const chatEndRef = useRef(null);
-  const isMicOnRef = useRef(isMicOn);
-  const streamRef = useRef(stream);
-  const peersRef = useRef(peers);
   const hasJoined = useRef(false);
-
-  // Sync refs with state
-  useEffect(() => { isMicOnRef.current = isMicOn; }, [isMicOn]);
-  useEffect(() => { streamRef.current = stream; }, [stream]);
-  useEffect(() => { peersRef.current = peers; }, [peers]);
 
   // ─── HELPERS ───
   const extractVideoId = (url) => {
@@ -79,43 +66,6 @@ function Room() {
     scrollToBottom();
   }, [messages]);
 
-  // ─── WEBRTC LOGIC ───
-  const createPeer = useCallback((userIdToSignal, callerId, stream) => {
-    const peer = new Peer({
-      initiator: true,
-      trickle: false,
-      stream,
-    });
-
-    peer.on("signal", (signal) => {
-      socket.emit("webrtc_signal", {
-        to: userIdToSignal,
-        from: callerId,
-        signal,
-      });
-    });
-
-    return peer;
-  }, []);
-
-  const addPeer = useCallback((incomingSignal, callerId, stream) => {
-    const peer = new Peer({
-      initiator: false,
-      trickle: false,
-      stream,
-    });
-
-    peer.on("signal", (signal) => {
-      socket.emit("webrtc_signal", {
-        to: callerId,
-        signal,
-      });
-    });
-
-    peer.signal(incomingSignal);
-    return peer;
-  }, []);
-
   // ─── SOCKET SETUP ───
   useEffect(() => {
     if (!username || showNameModal) return;
@@ -138,26 +88,6 @@ function Room() {
     const onRoomUsers = (updatedUsers) => {
       setIsConnecting(false);
       clearTimeout(fallbackTimer);
-      // Clean up peers for users who left
-      setPeers((prev) => {
-        const next = { ...prev };
-        Object.keys(next).forEach((id) => {
-          if (!updatedUsers.find((u) => u.id === id)) {
-            next[id].destroy();
-            delete next[id];
-          }
-        });
-        // If mic is on, initiate peers with new users
-        if (isMicOnRef.current && streamRef.current) {
-          updatedUsers.forEach((u) => {
-            if (u.id !== socket.id && !next[u.id]) {
-              const peer = createPeer(u.id, socket.id, streamRef.current);
-              next[u.id] = peer;
-            }
-          });
-        }
-        return next;
-      });
       setUsers(updatedUsers);
     };
 
@@ -183,11 +113,10 @@ function Room() {
       const id = extractVideoId(url);
       if (id) {
         setCurrentVideoId(id);
-        addToast("New video loaded!", "info");
       }
     };
 
-    const onVideoPlayed = ({ currentTime, username: actingUser }) => {
+    const onVideoPlayed = ({ currentTime }) => {
       suppressEventsUntil.current = Date.now() + 1000;
       if (playerRef.current) {
         if (Math.abs(playerRef.current.getCurrentTime() - currentTime) > 1) {
@@ -195,12 +124,9 @@ function Room() {
         }
         playerRef.current.playVideo();
       }
-      if (actingUser && actingUser !== username) {
-        addToast(`${actingUser} played the video`, "info");
-      }
     };
 
-    const onVideoPaused = ({ currentTime, username: actingUser }) => {
+    const onVideoPaused = ({ currentTime }) => {
       suppressEventsUntil.current = Date.now() + 1000;
       if (playerRef.current) {
         playerRef.current.pauseVideo();
@@ -208,18 +134,12 @@ function Room() {
           playerRef.current.seekTo(currentTime, true);
         }
       }
-      if (actingUser && actingUser !== username) {
-        addToast(`${actingUser} paused the video`, "info");
-      }
     };
 
-    const onVideoSeeked = ({ currentTime, username: actingUser }) => {
+    const onVideoSeeked = ({ currentTime }) => {
       suppressEventsUntil.current = Date.now() + 1000;
       if (playerRef.current) {
         playerRef.current.seekTo(currentTime, true);
-      }
-      if (actingUser && actingUser !== username) {
-        addToast(`${actingUser} seeked the video`, "info");
       }
     };
 
@@ -231,19 +151,6 @@ function Room() {
     const onRemoved = () => navigate("/");
     const onDisconnect = () => addToast("Reconnecting...", "warning");
 
-    const onWebrtcSignal = ({ from, signal }) => {
-      setPeers((prev) => {
-        if (prev[from]) {
-          prev[from].signal(signal);
-          return prev;
-        } else if (streamRef.current) {
-          const peer = addPeer(signal, from, streamRef.current);
-          return { ...prev, [from]: peer };
-        }
-        return prev;
-      });
-    };
-
     socket.on("room_users", onRoomUsers);
     socket.on("room_data", onRoomData);
     socket.on("video_loaded", onVideoLoaded);
@@ -254,7 +161,6 @@ function Room() {
     socket.on("toast", onToast);
     socket.on("removed_from_room", onRemoved);
     socket.on("disconnect", onDisconnect);
-    socket.on("webrtc_signal", onWebrtcSignal);
 
     return () => {
       clearTimeout(fallbackTimer);
@@ -268,34 +174,10 @@ function Room() {
       socket.off("toast", onToast);
       socket.off("removed_from_room", onRemoved);
       socket.off("disconnect", onDisconnect);
-      socket.off("webrtc_signal", onWebrtcSignal);
       socket.off("connect", doJoin);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId, username, showNameModal]);
-
-  // ─── MIC HANDLING ───
-  const toggleMic = async () => {
-    if (isMicOn) {
-      stream?.getTracks().forEach((track) => track.stop());
-      setStream(null);
-      setIsMicOn(false);
-    } else {
-      try {
-        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        setStream(audioStream);
-        setIsMicOn(true);
-        users.forEach((u) => {
-          if (u.id !== socket.id) {
-            const peer = createPeer(u.id, socket.id, audioStream);
-            setPeers((prev) => ({ ...prev, [u.id]: peer }));
-          }
-        });
-      } catch (err) {
-        addToast("Could not access microphone", "error");
-      }
-    }
-  };
 
   // ─── ACTIONS ───
   const handleLoadVideo = (customUrl = null) => {
@@ -398,10 +280,6 @@ function Room() {
             <span className="hidden lg:inline font-semibold">Room</span>
           </button>
           <div className="lg:mt-auto flex lg:flex-col gap-3 ml-auto lg:ml-0 shrink-0">
-            <button onClick={toggleMic} className={`nav-item flex items-center gap-3 ${isMicOn ? "bg-white/5 text-gray-300 hover:bg-white/10" : "bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)]"}`}>
-              {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />} 
-              <span className="hidden lg:inline font-medium">{isMicOn ? "Mic On" : "Muted"}</span>
-            </button>
             <button onClick={() => navigate("/")} className="nav-item flex items-center gap-3 text-red-400 hover:bg-red-500/10 hover:text-red-400 transition-all group">
               <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" /> 
               <span className="hidden lg:inline font-medium">Leave Room</span>
@@ -538,7 +416,6 @@ function Room() {
                         <span className={`text-[10px] uppercase tracking-wider font-bold ${u.role === "Host" ? "text-purple-400" : "text-gray-500"}`}>{u.role}</span>
                       </div>
                     </div>
-                    {u.isMuted && <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center shrink-0"><VolumeX className="w-4 h-4 text-red-400" /></div>}
                   </motion.div>
                 ))}
                 
