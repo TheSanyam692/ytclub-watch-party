@@ -362,7 +362,7 @@ function Room() {
   }
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-white flex overflow-hidden relative">
+    <div className="min-h-screen bg-[#09090b] text-white flex flex-col lg:flex-row overflow-x-hidden relative w-full lg:h-screen lg:overflow-hidden">
       <div className="orb orb-1" /><div className="orb orb-2" /><div className="noise-overlay" />
 
       {/* TOASTS */}
@@ -383,21 +383,21 @@ function Room() {
 
       {/* LEFT SIDEBAR */}
       <aside className="sidebar-left p-4 z-10 shrink-0">
-        <div className="flex items-center gap-3 mb-8 px-2">
+        <div className="flex items-center gap-3 mb-4 lg:mb-8 px-2">
           <span className="text-2xl">🎬</span>
           <span className="text-xl font-bold gradient-text">YTClub</span>
         </div>
         
-        <nav className="flex-1 flex flex-col gap-2">
+        <nav className="flex-1 flex lg:flex-col gap-2 overflow-x-auto custom-scrollbar pb-2 lg:pb-0">
           <button className="nav-item active">
             <span className="text-lg">🏠</span> Room
           </button>
-          <div className="mt-auto flex flex-col gap-2">
+          <div className="lg:mt-auto flex lg:flex-col gap-2 ml-auto lg:ml-0 shrink-0">
             <button onClick={toggleMic} className={`nav-item ${isMicOn ? "text-red-400 bg-red-500/10 border-red-500/20" : ""}`}>
-              <span className="text-lg">{isMicOn ? "🎙️" : "🔇"}</span> {isMicOn ? "Mic On" : "Mic Off"}
+              <span className="text-lg">{isMicOn ? "🎙️" : "🔇"}</span> <span className="hidden lg:inline">{isMicOn ? "Mic On" : "Mic Off"}</span>
             </button>
             <button onClick={() => navigate("/")} className="nav-item text-red-400 hover:bg-red-500/10 hover:text-red-400">
-              <span className="text-lg">🚪</span> Leave Room
+              <span className="text-lg">🚪</span> <span className="hidden lg:inline">Leave Room</span>
             </button>
           </div>
         </nav>
@@ -406,20 +406,22 @@ function Room() {
       {/* CENTER CONTENT */}
       <main className="flex-1 flex flex-col min-w-0 relative z-10" onClick={() => setContextMenu(null)}>
         {/* HEADER / URL BAR */}
-        <header className="h-16 border-b border-white/[0.05] flex items-center px-6 shrink-0 backdrop-blur-xl bg-black/20 justify-between">
-          <div className="flex-1 max-w-2xl url-bar">
+        <header className="h-auto lg:h-16 border-b border-white/[0.05] flex flex-col lg:flex-row items-center px-4 lg:px-6 py-3 lg:py-0 shrink-0 backdrop-blur-xl bg-black/20 gap-3 lg:gap-0 lg:justify-between w-full">
+          <div className="flex-1 w-full lg:max-w-2xl url-bar">
             <input 
               type="text" 
               placeholder="Paste YouTube URL here..." 
               value={urlInput} 
               onChange={(e) => setUrlInput(e.target.value)} 
               onKeyDown={(e) => e.key === "Enter" && handleLoadVideo()} 
+              className="w-full"
             />
             <button onClick={() => handleLoadVideo()}>LOAD</button>
           </div>
-          <div className="ml-4 flex items-center">
+          <div className="w-full lg:w-auto flex items-center justify-between lg:justify-end ml-0 lg:ml-4">
+             <span className="text-xs text-gray-500 font-bold lg:hidden">ROOM CODE:</span>
              <div className="room-code-chip" onClick={() => { navigator.clipboard.writeText(roomId); setCopied(true); setTimeout(()=>setCopied(false), 2000); addToast("Code copied!"); }}>
-               <span className="font-mono text-xs text-gray-400">ID:</span>
+               <span className="font-mono text-xs text-gray-400 hidden lg:inline">ID:</span>
                <span className="font-bold text-purple-400 tracking-widest">{roomId}</span>
                <span className="text-xs ml-1">{copied ? "✓" : "📋"}</span>
              </div>
@@ -427,8 +429,8 @@ function Room() {
         </header>
 
         {/* PLAYER AREA */}
-        <div className="flex-1 p-6 flex flex-col min-h-0">
-          <div className="glass-card flex-1 overflow-hidden flex flex-col min-h-[300px]">
+        <div className="flex-1 p-3 lg:p-6 flex flex-col min-h-0 w-full overflow-hidden">
+          <div className="glass-card flex-1 overflow-hidden flex flex-col min-h-[250px] lg:min-h-[300px] w-full">
             {currentVideoId ? (
               <div className="player-wrapper flex-1 relative">
                 <YouTube
@@ -440,9 +442,9 @@ function Room() {
                 />
               </div>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                <div className="w-24 h-24 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center text-4xl mb-6">🍿</div>
-                <h3 className="text-2xl font-bold text-white mb-2">Start the Watch Party!</h3>
+              <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-8 text-center h-full">
+                <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center text-3xl lg:text-4xl mb-4 lg:mb-6">🍿</div>
+                <h3 className="text-xl lg:text-2xl font-bold text-white mb-2">Start the Watch Party!</h3>
                 <p className="text-gray-500 mb-8 max-w-sm">Paste a YouTube link above to sync it with everyone in the room.</p>
               </div>
             )}
@@ -450,17 +452,17 @@ function Room() {
 
           {/* CONTROLS */}
           {currentVideoId && (
-            <div className="mt-4 p-4 glass-card flex items-center justify-center gap-6">
-              <button onClick={() => { const t = playerRef.current?.getCurrentTime() || 0; playerRef.current?.seekTo(t - 10, true); socket.emit("seek_video", { roomId, currentTime: t - 10 }); }} className="control-btn w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-xl">⏪</button>
-              <button onClick={() => { const s = playerRef.current?.getPlayerState(); if(s === 1) playerRef.current?.pauseVideo(); else playerRef.current?.playVideo(); }} className="control-btn w-16 h-16 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-2xl text-purple-400 shadow-[0_0_20px_rgba(139,92,246,0.2)]">⏯</button>
-              <button onClick={() => { const t = playerRef.current?.getCurrentTime() || 0; playerRef.current?.seekTo(t + 10, true); socket.emit("seek_video", { roomId, currentTime: t + 10 }); }} className="control-btn w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-xl">⏩</button>
+            <div className="mt-4 p-3 lg:p-4 glass-card flex items-center justify-center gap-4 lg:gap-6 w-full overflow-x-auto shrink-0">
+              <button onClick={() => { const t = playerRef.current?.getCurrentTime() || 0; playerRef.current?.seekTo(t - 10, true); socket.emit("seek_video", { roomId, currentTime: t - 10 }); }} className="control-btn w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-lg lg:text-xl shrink-0">⏪</button>
+              <button onClick={() => { const s = playerRef.current?.getPlayerState(); if(s === 1) playerRef.current?.pauseVideo(); else playerRef.current?.playVideo(); }} className="control-btn w-14 h-14 lg:w-16 lg:h-16 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-xl lg:text-2xl text-purple-400 shadow-[0_0_20px_rgba(139,92,246,0.2)] shrink-0">⏯</button>
+              <button onClick={() => { const t = playerRef.current?.getCurrentTime() || 0; playerRef.current?.seekTo(t + 10, true); socket.emit("seek_video", { roomId, currentTime: t + 10 }); }} className="control-btn w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-lg lg:text-xl shrink-0">⏩</button>
             </div>
           )}
         </div>
       </main>
 
       {/* RIGHT SIDEBAR */}
-      <aside className="sidebar-right z-10 shrink-0">
+      <aside className="sidebar-right z-10 shrink-0 flex flex-col h-[500px] lg:h-auto">
         <div className="flex border-b border-white/10 shrink-0 bg-white/5">
           <button onClick={() => setActiveTab("chat")} className={`flex-1 py-5 text-sm font-black uppercase tracking-widest transition-all ${activeTab === "chat" ? "text-purple-400 border-b-2 border-purple-400 bg-purple-500/10 shadow-[inset_0_-2px_10px_rgba(139,92,246,0.1)]" : "text-gray-400 hover:text-gray-200 hover:bg-white/5"}`}>Chat</button>
           <button onClick={() => setActiveTab("users")} className={`flex-1 py-5 text-sm font-black uppercase tracking-widest transition-all ${activeTab === "users" ? "text-purple-400 border-b-2 border-purple-400 bg-purple-500/10 shadow-[inset_0_-2px_10px_rgba(139,92,246,0.1)]" : "text-gray-400 hover:text-gray-200 hover:bg-white/5"}`}>People ({users.length})</button>
